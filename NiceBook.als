@@ -34,7 +34,7 @@ sig Comment extends Content {
 }
 
 sig Tag {
-	reference: one User
+	reference: some User
 }
 
 sig Wall {
@@ -47,6 +47,12 @@ one sig OnlyMe,Friends,FriendsOfFriends,Everyone extends Privacy {}
 
 // ------ End: Static Model -------
 
+// A.2: The social network has a fixed set of users/friendships
+pred networkOp[n,n':SocialNetwork] {
+	n'.users = n.users
+	n'.friends = n.friends
+}
+
 pred friendInvariant[n:SocialNetwork] {
 	// A.1: Users contain all the friends in the network
 	User.(n.friends) + (n.friends).User in n.users	
@@ -56,12 +62,17 @@ pred friendInvariant[n:SocialNetwork] {
 	no u:n.users | u in n.friends[u] 
 }
 
-pred invariant [n:SocialNetwork] {
-	friendInvariant[n]
+pred wallInvariant[n:SocialNetwork] {
+	// B.6: Each user is given a unique wall
+	all u,u':n.users | u'.wall = u.wall implies u' = u
 }
 
+pred invariant[n:SocialNetwork] {
+	friendInvariant[n]
+	wallInvariant[n]
+}
 
-pred show [n:SocialNetwork] {
+pred show[n:SocialNetwork] {
 	invariant[n]
 	#n.users > 1
 	#n.friends > 3
