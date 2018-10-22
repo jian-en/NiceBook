@@ -108,7 +108,7 @@ assert UploadPreserveInvariant {
 }
 
 check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
-
+//
 
 
 
