@@ -12,21 +12,21 @@ sig SocialNetwork {
 }
 
 sig User {
-	wall: one Wall
+	wall: one Wall,
+	commentPrivacy: Privacy
 }
 
 abstract sig Content {
-	contentPrivacy: Privacy,
-	commentPrivacy: Privacy
+	viewPrivacy: Privacy
 }
 
 sig Note extends Content {
 	photos: some Photo,
-	noteTags: some Tag
+	noteTags: set Tag
 }
 
 sig Photo extends Content {
-	photoTags: some Tag
+	photoTags: set Tag
 }
 
 sig Comment extends Content {
@@ -34,10 +34,11 @@ sig Comment extends Content {
 }
 
 sig Tag {
-	reference: some User
+	tagging: User -> one User
 }
 
-sig Wall {
+sig Wall { 
+	// A.4 wall can be empty
 	items: set Content,
 	wallPrivacy: Privacy
 }
@@ -47,11 +48,7 @@ one sig OnlyMe,Friends,FriendsOfFriends,Everyone extends Privacy {}
 
 // ------ End: Static Model -------
 
-// A.2: The social network has a fixed set of users/friendships
-pred networkOp[n,n':SocialNetwork] {
-	n'.users = n.users
-	n'.friends = n.friends
-}
+
 
 pred friendInvariant[n:SocialNetwork] {
 	// A.1: Users contain all the friends in the network
@@ -67,22 +64,55 @@ pred wallInvariant[n:SocialNetwork] {
 	all u,u':n.users | u'.wall = u.wall implies u' = u
 }
 
+pred tagInvariant[n:SocialNetwork] {
+	// B.5 User can be tagged only by its friends
+	all t: User.(n.contents).noteTags + User.(n.contents).photoTags, u, u': n.users | u->u' in t.tagging implies u->u' in n.friends
+}
+
+
 pred invariant[n:SocialNetwork] {
 	friendInvariant[n]
 	wallInvariant[n]
+	tagInvariant[n]
 }
 
 pred show[n:SocialNetwork] {
 	invariant[n]
 	#n.users > 1
-	#n.friends > 3
+	#n.friends > 2
 }
 
-run show for 3 but 1 SocialNetwork
+run show for 3 but exactly 1 SocialNetwork
 
 // -------- Start: Operations -------
+// A.2: The social network has a fixed set of users/friendships
+pred networkOp[n,n':SocialNetwork] {
+	n'.users = n.users
+	n'.friends = n.friends
+}
 
-pred upload[n,n':SocialNetwork, u:User, c:Content] {}
+// O.1: upload
+pred upload[n,n':SocialNetwork, u:User, c:Content] {
+	networkOp[n,n']	
+	// Precondition
+	c not in User.(n.contents) and u in n.users
+	no c.noteTags and no c.photoTags
+	// Postcondition
+	n'.contents = n.contents + u->c
+}
+
+assert UploadPreserveInvariant {
+	all n, n': SocialNetwork, u:User, c:Content |
+	 invariant[n] and upload[n,n',u,c] implies
+	 invariant[n']
+}
+
+check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
+
+
+
+
+
 pred remove[n,n':SocialNetwork, u:User, c:Content] {}
 pred publish[n,n':SocialNetwork, u:User, c:Content] {}
 pred unpublish[n,n':SocialNetwork, u:User, c:Content] {}
