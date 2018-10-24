@@ -34,7 +34,8 @@ sig Comment extends Content {
 }
 
 sig Tag {
-	tagging: User -> one User
+	tagger: one User,
+	taggee: one User
 }
 
 sig Wall { 
@@ -67,8 +68,7 @@ pred noteInvariant[n:SocialNetwork] {
 	all note,note':Note | note != note' implies #(note.photos & note'.photos) = 0
 	// Note can only contains photos to the same user
 	all note:Note, u:User | u->note in n.contents implies
-	 (all p:note.photos | u->p in n.contents)  
-	
+	 (all p:note.photos | u->p in n.contents) 
 }
 
 pred contentInvariant[n:SocialNetwork] {
@@ -78,6 +78,7 @@ pred contentInvariant[n:SocialNetwork] {
 	// A.8: no two users can create the same content
 	all u,u':n.users, c:Content | u->c in n.contents and u'->c in n.contents implies
 	u = u'
+	// Other invariants for comment and note
 	commentInvariant[n]
 	noteInvariant[n]
 }
@@ -91,12 +92,29 @@ pred wallInvariant[n:SocialNetwork] {
 	all w:Wall | one u:User | w = u.wall
 }
 
-pred tagInvariant[n:SocialNetwork] {
-	// B.5 User can be tagged only by its friends
-	all t: Tag, u, u': n.users | u in n.users and u' in n.users and 
-	u->u' in t.tagging implies u->u' in n.friends
+fun get_noteTags[c:Content]: set Tag {
+	c.noteTags
 }
 
+fun get_photoTags[c:Content]: set Tag {
+	c.photoTags
+}
+
+fun get_tags[c:Content]: set Tag {
+	get_noteTags[c] + get_photoTags[c]
+}
+
+pred tagInvariant[n:SocialNetwork] {
+	// B.5 User can be tagged only by its friends
+	all t: Tag, u, u': n.users | u = t.tagger and u' = t.taggee implies
+	u -> u' in n.friends
+	// noteTag and photoTag not overlap
+	all c:Content | #(get_noteTags[c] & get_photoTags[c]) = 0
+	// tags across contents not overlap
+	all c,c':Content | c != c' implies #(get_tags[c] & get_tags[c']) = 0
+	// every tag has an content associate with it
+	all t:Tag | one c:Content | t in get_tags[c]
+}
 
 pred invariant[n:SocialNetwork] {
 	friendInvariant[n]
@@ -109,7 +127,7 @@ pred show[n:SocialNetwork] {
 	invariant[n]
 }
 
-run show for 3 but exactly 1 SocialNetwork
+run show for 5 but exactly 1 SocialNetwork, exactly 1 Tag
 
 // -------- Start: Operations -------
 // A.2: The social network has a fixed set of users/friendships
