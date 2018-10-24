@@ -25,8 +25,8 @@ pred upload[n,n':SocialNetwork, u:User, c:Content] {
 
 assert UploadPreserveInvariant {
 	all n, n': SocialNetwork, u:User, c:Content |
-	 invariant[n] and upload[n,n',u,c] implies
-	 invariant[n']
+		invariant[n] and upload[n,n',u,c] implies
+		invariant[n']
 }
 
 check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
@@ -66,7 +66,6 @@ pred promotePublish[n,n':SocialNetwork, u,u':User, w,w':Wall] {
 	// Postcondition
 	u'.wall = w'
 	n'.users = n.users - u + u'
-	// TODO: Maybe simpler way
 	all u1 : u.(n.friends) | n'.friends = n.friends - u -> u1 + u' -> u1
 	all u2 : (n.friends).u | n'.friends = n.friends - u2 -> u + u2 -> u
 }
@@ -82,6 +81,20 @@ pred publish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 	publishWall[w,w',c]
 	promotePublish[n,n',u,u',w,w']
 }
+
+//fact {
+//	all n:SocialNetwork | invariant[n]
+//}
+//
+//run publish for 3
+
+assert PublishPreserveInvariant {
+	all n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content |
+		invariant[n] and publish[n,n',u,u',w,w',c] implies
+		invariant[n']
+}
+
+check PublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 
 // O.4: unpublish
 pred unpublish[n,n':SocialNetwork, u:User, c:Content] {}
