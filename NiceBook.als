@@ -108,17 +108,33 @@ assert UploadPreserveInvariant {
 }
 
 check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
-//
 
-
-
-
+// O.2: remove
 pred remove[n,n':SocialNetwork, u:User, c:Content] {}
-pred publish[n,n':SocialNetwork, u:User, c:Content] {}
+
+// O.3: publish
+pred publish[n,n':SocialNetwork, u:User, c:Content] {
+	networkOp[n,n']
+	// If c is a new one
+	n'.contents = n.contents + u -> c
+	// Publish to the wall
+	//??? = u.wall.items + c
+	// B.8: Notes and photos from the user or its friends can be published
+}
+
+// O.4: unpublish
 pred unpublish[n,n':SocialNetwork, u:User, c:Content] {}
-pred addComment[n,n':SocialNetwork, u:User, c:Content] {}
-pred addTag[n,n':SocialNetwork,t:Tag, c:Content] {}
-pred removeTag[n,n':SocialNetwork,t:Tag] {}
+
+// O.5: addComment
+pred addComment[n,n':SocialNetwork, u:User, c:Content] {
+	// B.10: Own or visible content
+}
+
+// O.6: addTag
+pred addTag[n,n':SocialNetwork, t:Tag, c:Content] {}
+
+// O.7: removeTag
+pred removeTag[n,n':SocialNetwork, t:Tag] {}
 
 // --------- End: Operations --------
 
