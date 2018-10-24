@@ -88,7 +88,7 @@ pred wallInvariant[n:SocialNetwork] {
 	// B.6: Each user is given a unique wall
 	all u,u':n.users | u'.wall = u.wall implies u' = u
 	// A.10: content on the wall must in the social network contents relationship
-	all u:n.users | all c:u.wall.items | u->c in n.contents
+	all u:n.users | all c:u.wall.items | c in User.(n.contents)
 	// A.11: all walls has one user associated with it
 	all w:Wall | one u:User | w = u.wall
 }
@@ -131,4 +131,4 @@ pred show[n:SocialNetwork] {
 	invariant[n]
 }
 
-run show for 5 but exactly 1 SocialNetwork, exactly 3 Comment
+run show for 3 but exactly 1 SocialNetwork
