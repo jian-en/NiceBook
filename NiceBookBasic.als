@@ -115,7 +115,9 @@ pred tagInvariant[n:SocialNetwork] {
 	all c,c':Content | c != c' implies #(get_tags[c] & get_tags[c']) = 0
 	// every tag has a content associate with it
 	all t:Tag | one c:Content | t in get_tags[c]
-	// 
+	// on a same photo or note, a user can only be tagged once
+	all c:Content | all t,t': c.photoTags + c.noteTags | t != t' implies
+	 t.taggee != t'.taggee
 }
 
 pred invariant[n:SocialNetwork] {
