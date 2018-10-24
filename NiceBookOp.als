@@ -32,7 +32,24 @@ assert UploadPreserveInvariant {
 check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
 
 // O.2: remove
-pred remove[n,n':SocialNetwork, u:User, c:Content] {}
+pred remove[n,n':SocialNetwork, u:User, c:Content] {
+	networkOp[n,n']
+	// Precondition
+	c in User.(n.contents) and u in n.users
+	u->c in n.contents 
+	// Postcondition
+	n'.contents = n.contents - u->c	
+}
+assert RemovePreserveInvariant {
+	all n, n': SocialNetwork, u:User, c:Content |
+	invariant[n] and upload[n,n',u,c] implies
+	invariant[n']
+}
+check RemovePreserveInvariant for 2 but exactly 2 SocialNetwork
+fact {
+	all n:SocialNetwork | invariant[n]
+}
+run remove for 3
 
 // Local states in O.3
 pred publishWall[w,w':Wall, c:Content] {
