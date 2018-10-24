@@ -48,8 +48,6 @@ one sig OnlyMe,Friends,FriendsOfFriends,Everyone extends Privacy {}
 
 // ------ End: Static Model -------
 
-
-
 pred friendInvariant[n:SocialNetwork] {
 	// A.1: Users contain all the friends in the network
 	User.(n.friends) + (n.friends).User in n.users	
@@ -59,27 +57,44 @@ pred friendInvariant[n:SocialNetwork] {
 	no u:n.users | u in n.friends[u] 
 }
 
+pred commentInvariant[n:SocialNetwork] {
+	// A.9: comment can not be attached to itself
+	all c:Comment | c not in c.attached
+}
+
+pred contentInvariant[n:SocialNetwork] {
+	// A.7: user who can create content must belong to users
+	(n.contents).Content in n.users
+	// A.8: no two users can create the same content
+	all u,u':n.users, c:Content | u->c in n.contents and u'->c in n.contents implies
+	u = u'
+}
+
 pred wallInvariant[n:SocialNetwork] {
 	// B.6: Each user is given a unique wall
 	all u,u':n.users | u'.wall = u.wall implies u' = u
+	// A.10: content on the wall must in the social network contents relationship
+	all u:n.users | all c:u.wall.items | u->c in n.contents
 }
 
 pred tagInvariant[n:SocialNetwork] {
 	// B.5 User can be tagged only by its friends
-	all t: User.(n.contents).noteTags + User.(n.contents).photoTags, u, u': n.users | u->u' in t.tagging implies u->u' in n.friends
+	all t: Tag, u, u': n.users | u in n.users and u' in n.users and 
+	u->u' in t.tagging implies u->u' in n.friends
+
 }
 
 
 pred invariant[n:SocialNetwork] {
 	friendInvariant[n]
+	contentInvariant[n]
 	wallInvariant[n]
+	commentInvariant[n]
 	tagInvariant[n]
 }
 
 pred show[n:SocialNetwork] {
 	invariant[n]
-	#n.users > 1
-	#n.friends > 2
 }
 
 run show for 3 but exactly 1 SocialNetwork
