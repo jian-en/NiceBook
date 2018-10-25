@@ -91,12 +91,6 @@ pred unpublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 	promotePublish[n,n',u,u',w,w',c]
 }
 
-fact {
-	all n:SocialNetwork | invariant[n]
-}
-
-run publish for 5 but exactly 2 SocialNetwork
-
 assert UnpublishPreserveInvariant {
 	all n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content |
 		invariant[n] and publish[n,n',u,u',w,w',c] implies
@@ -127,7 +121,32 @@ check AddPreservesInvariant for 5
 run addComment for 10
 
 // O.6: addTag
-pred addTag[n,n':SocialNetwork, t:Tag, c:Content] {}
+pred addTag[n,n':SocialNetwork, t:Tag, c,c':Content, er,ee:User] {
+	// Precondition
+	c in (n.users).(n.contents)
+	c in Note + Photo
+	er in n.users
+	ee in n.users
+	er in ee.(n.friends)
+	// TODO: er can view c
+	// Postcondition
+	all u:((n.contents).c & n.users) | n'.contents = n.contents - u -> c + u -> c'
+	// TODO: update comments attached to c
+	// Add a tag to a photo or a note
+	c'.noteTags = c.noteTags + t
+	c'.photoTags = c.photoTags + t
+	c'.viewPrivacy = c.viewPrivacy
+	c'.photos = c.photos
+	t.tagger = er
+	t.taggee = ee
+	// Automatically published onto ee's wall
+}
+
+fact {
+	all n:SocialNetwork | invariant[n]
+}
+
+run addTag for 3 but exactly 2 SocialNetwork
 
 // O.7: removeTag
 pred removeTag[n,n':SocialNetwork, t:Tag] {}
