@@ -6,6 +6,10 @@ module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
 open NiceBook/NiceBookPrivacy
 
+fact {
+	all n:SocialNetwork | invariant[n]
+}
+
 // -------- Start: Operations -------
 // A.2: The social network has a fixed set of users/friendships
 pred networkOp[n,n':SocialNetwork] {
@@ -13,26 +17,49 @@ pred networkOp[n,n':SocialNetwork] {
 	n'.friends = n.friends
 }
 
+// c is a pure content, either Note or Photo
+pred is_naked[c:Content] {
+	no get_tags[c]
+	no comment:Comment | comment.attached = c
+	no note:Note | c in note.photos
+}
+
 // O.1: upload
 pred upload[n,n':SocialNetwork, u:User, c:Content] {
 	networkOp[n,n']	
-	// Precondition: c not exist
+	// Precondition: c not exist and u exists in User
 	c not in User.(n.contents) and u in n.users
-	no get_tags[c]
+	is_naked[c]
 	// Postcondition
 	n'.contents = n.contents + u->c
 }
 
+run upload for 3
+
 assert UploadPreserveInvariant {
 	all n, n': SocialNetwork, u:User, c:Content |
-		invariant[n] and upload[n,n',u,c] implies
-		invariant[n']
+		invariants[n] and upload[n,n',u,c] implies
+		invariants[n']
 }
 
-check UploadPreserveInvariant for 2 but exactly 2 SocialNetwork
+check UploadPreserveInvariant for 5 but exactly 2 SocialNetwork
+
 
 // O.2: remove
-pred remove[n,n':SocialNetwork, u:User, c:Content] {}
+pred remove[n,n':SocialNetwork, u:User, c:Content] {
+	networkOp[n,n']
+	// Pre-condition:
+	// u does have the c
+	u->c in n.contents and u in n.users
+	#(get_related[c] & u.wall.items) = 0
+	// Post-condition
+	
+	n'.contents = n.contents - {i:User, m:Content | i = u and m in get_related[c]}
+}
+
+run remove for 3
+
+
 
 // Global states in O.3 and O.4
 pred promotePublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
@@ -69,8 +96,8 @@ pred publish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 
 assert PublishPreserveInvariant {
 	all n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content |
-		invariant[n] and publish[n,n',u,u',w,w',c] implies
-		invariant[n']
+		invariants[n] and publish[n,n',u,u',w,w',c] implies
+		invariants[n']
 }
 
 check PublishPreserveInvariant for 5 but exactly 2 SocialNetwork
@@ -91,10 +118,12 @@ pred unpublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 	promotePublish[n,n',u,u',w,w',c]
 }
 
+run publish for 5 but exactly 2 SocialNetwork
+
 assert UnpublishPreserveInvariant {
 	all n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content |
-		invariant[n] and publish[n,n',u,u',w,w',c] implies
-		invariant[n']
+		invariants[n] and publish[n,n',u,u',w,w',c] implies
+		invariants[n']
 }
 
 check UnpublishPreserveInvariant for 2 but exactly 2 SocialNetwork
@@ -112,8 +141,8 @@ pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 
 assert AddPreservesInvariant {
 	all n,n':SocialNetwork, u:User, c:Comment, x:Content |
-		invariant[n] and addComment[n,n',u,c,x] implies
-		invariant[n']	
+		invariants[n] and addComment[n,n',u,c,x] implies
+		invariants[n']	
 }
 
 check AddPreservesInvariant for 5

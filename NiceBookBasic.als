@@ -1,6 +1,6 @@
 /*
  * Project 1: NiceBook
- * NiceBookBasic
+ * NiceBookBasic - Invariant and functions
  * 
  */
 
@@ -49,28 +49,38 @@ sig Wall {
 abstract sig Privacy {}
 one sig OnlyMe,Friends,FriendsOfFriends,Everyone extends Privacy {}
 
-// ------ End: Static Model -------
 
-pred friendInvariant[n:SocialNetwork] {
+// ------ End: Static Model -------
+pred usersInvariant[n:SocialNetwork] {
 	// A.1: Users contain all the friends in the network
-	User.(n.friends) + (n.friends).User in n.users	
+	User.(n.friends) + (n.friends).User in n.users
+}
+
+pred friendInvariant[n:SocialNetwork] {	
 	// B.3: Friendship is a symmetric relation
 	all u,u':n.users | u in n.friends[u'] implies u' in n.friends[u]
 	// B.4: It is not possible for a user to be its own friend
 	no u:n.users | u in n.friends[u] 
 }
 
+pred photoInvariant[n:SocialNetwork] {
+	all photo:all_photos[n] | get_note_from_photo[photo] in User.(n.contents) 
+}
+
 pred commentInvariant[n:SocialNetwork] {
 	// A.10: comment can not be attached to itself
 	// A.11: No cycles in comments attachment 
-	all c:Comment | c not in c.^attached
+	all c:all_comments[n] | c not in c.^attached
+	// comment can only attach to content in the network
+	all c:all_comments[n] | c.attached in User.(n.contents)
 }
 
 pred noteInvariant[n:SocialNetwork] {
 	// A.6 two different note cannot include the same photo
-	all note,note':Note | note != note' implies #(note.photos & note'.photos) = 0
+	all note,note': all_notes[n] | 
+	note != note' implies #(note.photos & note'.photos) = 0
 	// A.13 Note can only contain photos created by the same user
-	all note:Note, u:User | u->note in n.contents implies
+	all note: all_notes[n], u: n.users | u->note in n.contents implies
 	 (all p:note.photos | u->p in n.contents) 
 }
 
@@ -81,8 +91,9 @@ pred contentInvariant[n:SocialNetwork] {
 	all u,u':n.users, c:Content | u->c in n.contents and u'->c in n.contents implies
 	u = u'
 	// Other invariants for comment and note
-	commentInvariant[n]
 	noteInvariant[n]
+	photoInvariant[n]
+	commentInvariant[n]
 }
 
 pred wallInvariant[n:SocialNetwork] {
@@ -102,18 +113,6 @@ pred wallInvariant[n:SocialNetwork] {
 	all w:Wall | one u:User | w = u.wall
 }
 
-fun get_noteTags[c:Content]: set Tag {
-	c.noteTags
-}
-
-fun get_photoTags[c:Content]: set Tag {
-	c.photoTags
-}
-
-fun get_tags[c:Content]: set Tag {
-	get_noteTags[c] + get_photoTags[c]
-}
-
 pred tagInvariant[n:SocialNetwork] {
 	// B.5 User can be tagged only by its friends
 	all t: Tag, u, u': n.users | u = t.tagger and u' = t.taggee implies
@@ -130,15 +129,52 @@ pred tagInvariant[n:SocialNetwork] {
 	 t.taggee != t'.taggee
 }
 
-pred invariant[n:SocialNetwork] {
+pred invariants[n:SocialNetwork] {
+	usersInvariant[n]
 	friendInvariant[n]
 	contentInvariant[n]
+
 	wallInvariant[n]
 	tagInvariant[n]
 }
 
-pred show[n:SocialNetwork] {
-	invariant[n]
+
+run {
+	all n:SocialNetwork | invariants[n]
+} for 3 but exactly 1 SocialNetwork
+
+fun get_note_from_photo[p:Photo] : set Note {
+	{c:Note | p in c.photos}
 }
 
-run show for 3 but exactly 1 SocialNetwork
+fun all_notes[n:SocialNetwork]: set Note {
+	User.(n.contents) & Note
+}
+
+fun all_photos[n:SocialNetwork]: set Photo {
+	User.(n.contents) & Photo
+}
+
+fun all_comments[n:SocialNetwork]: set Comment {
+	User.(n.contents) & Comment
+}
+
+fun all_comments[c:Content]: set Comment {
+	{m:Comment | c in m.^attached}
+}
+
+fun get_related[c:Content] : set Content {
+	c + c.photos + all_comments[c]
+}
+
+fun get_noteTags[c:Content]: set Tag {
+	c.noteTags
+}
+
+fun get_photoTags[c:Content]: set Tag {
+	c.photoTags
+}
+
+fun get_tags[c:Content]: set Tag {
+	get_noteTags[c] + get_photoTags[c]
+}
