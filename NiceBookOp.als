@@ -7,7 +7,7 @@ open NiceBook/NiceBookBasic
 open NiceBook/NiceBookPrivacy
 
 fact {
-	all n:SocialNetwork | invariant[n]
+	all n:SocialNetwork | invariants[n]
 }
 
 // -------- Start: Operations -------
@@ -171,9 +171,6 @@ pred addTag[n,n':SocialNetwork, t:Tag, c,c':Content, er,ee:User] {
 	// Automatically published onto ee's wall
 }
 
-fact {
-	all n:SocialNetwork | invariant[n]
-}
 
 run addTag for 3 but exactly 2 SocialNetwork
 
