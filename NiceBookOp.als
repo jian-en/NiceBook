@@ -4,6 +4,7 @@
  */
 module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
+open NiceBook/NiceBookPrivacy
 
 
 // -------- Start: Operations -------
@@ -100,9 +101,25 @@ check PublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 pred unpublish[n,n':SocialNetwork, u:User, c:Content] {}
 
 // O.5: addComment
-pred addComment[n,n':SocialNetwork, u:User, c:Content] {
+pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 	// B.10: Own or visible content
+	x in viewable[u,x,n]
+	networkOp[n,n']
+	c not in User.(n.contents)
+	// Add comment
+	n'.contents = n.contents + u->c
+	c.attached = x
 }
+
+assert AddPreservesInvariant {
+	all n,n':SocialNetwork, u:User, c:Comment, x:Content |
+		invariant[n] and addComment[n,n',u,c,x] implies
+		invariant[n']	
+}
+
+check AddPreservesInvariant for 5
+
+run addComment for 10
 
 // O.6: addTag
 pred addTag[n,n':SocialNetwork, t:Tag, c:Content] {}
@@ -111,13 +128,3 @@ pred addTag[n,n':SocialNetwork, t:Tag, c:Content] {}
 pred removeTag[n,n':SocialNetwork, t:Tag] {}
 
 // --------- End: Operations --------
-
-/*
-fun viewable[u:User] : set Content {
-
-}
-assert NoPrivacyViolation {
-
-}
-*/
-
