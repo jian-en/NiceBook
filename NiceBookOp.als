@@ -192,6 +192,7 @@ pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 	// Add comment
 	n'.contents = n.contents + u->c
 	c.attached = x
+	c.viewPrivacy = x.viewPrivacy
 }
 
 assert AddPreservesInvariant {
@@ -200,9 +201,12 @@ assert AddPreservesInvariant {
 		invariants[n']	
 }
 
-check AddPreservesInvariant for 5
+check AddPreservesInvariant for 10
 
-run addComment for 10
+run AddComment {
+	some n,n':SocialNetwork, u:User, c:Comment, x:Content | 
+	invariants[n] and #n.users = 2 and addComment[n,n',u,c,x]
+} for 10 
 
 // Unchanged things in content while tagging
 pred contentOp[c,c':Content] {
