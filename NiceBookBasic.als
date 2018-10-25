@@ -85,8 +85,6 @@ pred noteInvariant[n:SocialNetwork] {
 }
 
 pred contentInvariant[n:SocialNetwork] {
-	// A.8: A user who can create content must belong to the set of User
-	(n.contents).Content in n.users
 	// A.9: No two users can post the same copy of a content
 	all u,u':n.users, c:Content | u->c in n.contents and u'->c in n.contents implies
 	u = u'
@@ -100,7 +98,7 @@ pred wallInvariant[n:SocialNetwork] {
 	// B.6: Each user is given a unique wall
 	all u,u':n.users | u'.wall = u.wall implies u' = u
 	// A.12: content on the wall must in the social network contents relationship
-
+	all u:n.users | all c:u.wall.items | c in User.(n.contents)
 	// A.16: A user cannot tag itself
 	// Owner & friends & owner as tagee
 	all u:n.users | all c:u.wall.items | 

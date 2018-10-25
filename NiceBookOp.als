@@ -134,7 +134,7 @@ pred promotePublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 pred publishWall[w,w':Wall, c:Content] {
 	w'.wallPrivacy = w.wallPrivacy
 	// Publish to the wall
-	w'.items = w.items + c
+	w'.items = w.items + c  // TODO: everything related to c
 }
 
 // O.3: publish
@@ -161,7 +161,7 @@ check PublishPreserveInvariant for 5 but exactly 2 SocialNetwork
 pred unpublishWall[w,w':Wall, c:Content] {
 	w'.wallPrivacy = w.wallPrivacy
 	// Unpublish to the wall
-	w'.items = w.items - c
+	w'.items = w.items - c  // TODO: everything related to c
 }
 
 // O.4: unpublish
@@ -172,8 +172,6 @@ pred unpublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 	unpublishWall[w,w',c]
 	promotePublish[n,n',u,u',w,w',c]
 }
-
-run publish for 5 but exactly 2 SocialNetwork
 
 assert UnpublishPreserveInvariant {
 	all n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content |
@@ -204,30 +202,41 @@ check AddPreservesInvariant for 5
 
 run addComment for 10
 
-// O.6: addTag
-pred addTag[n,n':SocialNetwork, t:Tag, c,c':Content, er,ee:User] {
-	// Precondition
-	c in (n.users).(n.contents)
-	c in Note + Photo
-	er in n.users
-	ee in n.users
-	er in ee.(n.friends)
-	// TODO: er can view c
-	// Postcondition
-	all u:((n.contents).c & n.users) | n'.contents = n.contents - u -> c + u -> c'
-	// TODO: update comments attached to c
-	// Add a tag to a photo or a note
-	c'.noteTags = c.noteTags + t
-	c'.photoTags = c.photoTags + t
+// Unchanged things in content while tagging
+pred contentOp[c,c':Content] {
 	c'.viewPrivacy = c.viewPrivacy
 	c'.photos = c.photos
-	t.tagger = er
-	t.taggee = ee
-	// Automatically published onto ee's wall
+	c'.attached = c.attached
 }
 
+// O.6: addTag
+pred addTag[n,n',n'':SocialNetwork, t:Tag, c,c':Content, er,ee,ee':User, w,w':Wall] {
+	// Precondition
+	t not in User.(n.contents).noteTags
+	t not in User.(n.contents).photoTags
+	c in User.(n.contents)
+	c' not in User.(n.contents)
+	er in n.users
+	ee in n.users
+	c in viewable[er,n]  // er can view c
+	// Postcondition
+	all u:((n.contents).c & n.users) | n'.contents = n.contents - u -> c + u -> c'
+	// Add a tag to a photo or a note
+	t.tagger = er
+	t.taggee = ee
+	((c in Note) and (c'.noteTags = c.noteTags + t)) or
+	((c in Photo) and (c'.photoTags = c.photoTags + t))
+	contentOp[c,c']
+	// Automatically published onto ee's wall
+	publish[n',n'',ee,ee',w,w',c']
+}
 
-run addTag for 3 but exactly 2 SocialNetwork
+assert AddTagPreservesInvariant {
+	all n,n',n'':SocialNetwork, t:Tag, c,c':Content, er,ee,ee':User, w,w':Wall |
+		(invariants[n] and addTag[n,n',n'',t,c,c',er,ee,ee',w,w']) implies
+		(invariants[n'] and invariants[n''])
+}
+check AddTagPreservesInvariant for 5
 
 // O.7: removeTag
 pred removeTag[n,n':SocialNetwork, t:Tag] {}
