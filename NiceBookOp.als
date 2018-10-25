@@ -4,6 +4,7 @@
  */
 module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
+open NiceBook/NiceBookPrivacy
 
 // -------- Start: Operations -------
 // A.2: The social network has a fixed set of users/friendships
@@ -107,7 +108,7 @@ check UnpublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 // O.5: addComment
 pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 	// B.10: Own or visible content
-	x in viewable[u,x,n]
+	x in viewable[u,n]
 	networkOp[n,n']
 	c not in User.(n.contents)
 	// Add comment
