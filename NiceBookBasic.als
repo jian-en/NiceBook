@@ -1,6 +1,7 @@
 /*
+ * Project 1: NiceBook
  * NiceBookBasic
- *
+ * 
  */
 
 module NiceBook/NiceBookBasic

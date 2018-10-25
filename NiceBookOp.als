@@ -6,7 +6,6 @@ module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
 open NiceBook/NiceBookPrivacy
 
-
 // -------- Start: Operations -------
 // A.2: The social network has a fixed set of users/friendships
 pred networkOp[n,n':SocialNetwork] {
@@ -17,9 +16,9 @@ pred networkOp[n,n':SocialNetwork] {
 // O.1: upload
 pred upload[n,n':SocialNetwork, u:User, c:Content] {
 	networkOp[n,n']	
-	// Precondition
+	// Precondition: c not exist
 	c not in User.(n.contents) and u in n.users
-	no c.noteTags and no c.photoTags
+	no get_tags[c]
 	// Postcondition
 	n'.contents = n.contents + u->c
 }
