@@ -70,7 +70,7 @@ pred photoInvariant[n:SocialNetwork] {
 pred commentInvariant[n:SocialNetwork] {
 	// A.10: comment can not be attached to itself
 	// A.11: No cycles in comments attachment 
-	all c:all_comments[n] | c not in c.^attached
+	all c:Comment | c not in c.^attached
 	// comment can only attach to content in the network
 	all c:all_comments[n] | c.attached in User.(n.contents)
 }
@@ -110,7 +110,10 @@ pred wallInvariant[n:SocialNetwork] {
 	u in c.noteTags.taggee // taggee
 		
 	// A.18: all walls has one user associated with it
-	all w:Wall | one u:User | w = u.wall
+	all w:n.users.wall | one u:User | w = u.wall
+	// all descendents are on the wall if the parent on the wall
+	all w:n.users.wall, c:Content | c in w.items implies
+	  (c.photos + all_comments[c]) in w.items
 }
 
 pred tagInvariant[n:SocialNetwork] {
@@ -142,6 +145,8 @@ pred invariants[n:SocialNetwork] {
 run {
 	all n:SocialNetwork | invariants[n]
 } for 3 but exactly 1 SocialNetwork
+
+// Functions
 
 fun get_note_from_photo[p:Photo] : set Note {
 	{c:Note | p in c.photos}
@@ -177,4 +182,12 @@ fun get_photoTags[c:Content]: set Tag {
 
 fun get_tags[c:Content]: set Tag {
 	get_noteTags[c] + get_photoTags[c]
+}
+
+fun get_upload_not_publish[n:SocialNetwork, u:User] :set Content {
+	{c:Content | c in n.contents[u] and c not in u.wall.items and u in n.users}
+}
+
+fun get_walls[n:SocialNetwork] : set Wall {
+	n.users.wall
 }

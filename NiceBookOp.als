@@ -1,6 +1,6 @@
 /*
- *NiceBook
- *
+ * Project1: NiceBook
+ * NiceBook: Operations
  */
 module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
@@ -11,30 +11,45 @@ fact {
 }
 
 // -------- Start: Operations -------
-// A.2: The social network has a fixed set of users/friendships
+// A.2: The social network users and friends not change
 pred networkOp[n,n':SocialNetwork] {
 	n'.users = n.users
 	n'.friends = n.friends
 }
 
-// c is a pure content, either Note or Photo
-pred is_naked[c:Content] {
+// c is a pure content
+pred is_naked[c:Content, n:SocialNetwork] {
 	no get_tags[c]
 	no comment:Comment | comment.attached = c
-	no note:Note | c in note.photos
+	c not in User.(n.contents)
+}
+
+pred uploadPhoto[n,n':SocialNetwork,u:User,p:Photo] {
+	// Photo no association with any note
+	no get_note_from_photo[p]	
+	n'.contents = n.contents + u->p
+}
+
+pred uploadNote[n,n':SocialNetwork,u:User,note:Note] {
+	all p:note.photos | is_naked[p, n]
+	n'.contents = n.contents + u->note + {a:User, c:Content | a = u and c in note.photos}
+}
+
+pred uploadComment[n,n':SocialNetwork,u:User,c:Comment] {
+	c.attached in get_upload_not_publish[n, u]
+	n'.contents = n.contents + u->c
 }
 
 // O.1: upload
 pred upload[n,n':SocialNetwork, u:User, c:Content] {
-	networkOp[n,n']	
-	// Precondition: c not exist and u exists in User
-	c not in User.(n.contents) and u in n.users
-	is_naked[c]
-	// Postcondition
-	n'.contents = n.contents + u->c
+	networkOp[n,n']
+	u in n.users and is_naked[c, n]		
+	(c in Photo and uploadPhoto[n,n',u,c]) or // upload a photo
+	(c in Note and uploadNote[n,n',u,c]) or // upload a note
+	(c in Comment and uploadComment[n,n',u,c]) // upload a comment
 }
 
-run upload for 3
+run upload for 4
 
 assert UploadPreserveInvariant {
 	all n, n': SocialNetwork, u:User, c:Content |
@@ -42,22 +57,60 @@ assert UploadPreserveInvariant {
 		invariants[n']
 }
 
-check UploadPreserveInvariant for 5 but exactly 2 SocialNetwork
+check UploadPreserveInvariant for 7 but exactly 2 SocialNetwork
+// end of O.1:upload
 
-
-// O.2: remove
-pred remove[n,n':SocialNetwork, u:User, c:Content] {
-	networkOp[n,n']
-	// Pre-condition:
-	// u does have the c
-	u->c in n.contents and u in n.users
-	#(get_related[c] & u.wall.items) = 0
-	// Post-condition
-	
-	n'.contents = n.contents - {i:User, m:Content | i = u and m in get_related[c]}
+pred removeNote[n,n':SocialNetwork,u:User,note:Note] {
+	// The photos, the comments and comments of photos not on the wall
+	all p:note.photos | p not in u.wall.items
+	all_comments[note] not in u.wall.items
+	all p:note.photos | all_comments[p] not in u.wall.items
+	// Remove all the related contents
+	n'.contents = n.contents - 
+			 {a:User, c:Content | a = u and 
+			  c in (note + note.photos + all_comments[note] +
+			  {c:Comment | some p:note.photos | c in all_comments[p]}
+	)}
 }
 
-run remove for 3
+pred removePhoto[n,n':SocialNetwork, u:User, p:Photo] {
+	// Photo no association with any note
+	no get_note_from_photo[p]
+		
+	n'.contents = n.contents - 
+			  {m:User, c:Comment | m = u and c in all_comments[p]} - u->p
+}
+
+pred removeComment[n,n':SocialNetwork,u:User,c:Comment] {
+	c.attached in get_upload_not_publish[n, u]
+
+	n'.contents = n.contents - {m:User, o:Comment | 
+					    m=u and o in all_comments[c]} - u->c
+}
+
+// begin of O.2: remove
+pred remove[n,n':SocialNetwork, u:User, c:Content] {
+	networkOp[n,n']
+	// Pre-condition
+	// not published
+	u in n.users and u->c in n.contents and c not in u.wall.items
+	// Post-condition
+	(c in Photo and removePhoto[n,n',u,c]) or // remove a photo
+	(c in Note and removeNote[n,n',u,c]) or
+	(c in Comment and removeComment[n,n',u,c])
+	
+}
+
+run remove for 4
+
+assert RemovePreserveInvariant {
+	all n, n':SocialNetwork, u:User, c:Content |
+		invariants[n] and remove[n,n',u,c] implies
+		invariants[n']
+}
+
+check RemovePreserveInvariant for 7 but exactly 2 SocialNetwork
+// end of O.2 remove
 
 
 
