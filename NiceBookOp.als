@@ -132,6 +132,8 @@ check UnpublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 	// B.10: Own or visible content
 	x in viewable[u,n]
+	// User can control who can comment on their content
+	x in commentable[u,n]
 	networkOp[n,n']
 	c not in User.(n.contents)
 	// Add comment
