@@ -4,7 +4,6 @@
  */
 module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
-open NiceBook/NiceBookPrivacy
 
 // -------- Start: Operations -------
 // A.2: The social network has a fixed set of users/friendships

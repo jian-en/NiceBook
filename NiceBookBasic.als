@@ -88,8 +88,14 @@ pred wallInvariant[n:SocialNetwork] {
 	// B.6: Each user is given a unique wall
 	all u,u':n.users | u'.wall = u.wall implies u' = u
 	// A.10: content on the wall must in the social network contents relationship
-	// TODO: owner & friends & owner as tagee
-	all u:n.users | all c:u.wall.items | c in User.(n.contents)
+
+	// Owner & friends & owner as tagee
+	all u:n.users | all c:u.wall.items | 
+	c in n.contents[u] or // owner
+	c in n.friends[u].(n.contents) or // friends
+	u in c.photoTags.taggee or // taggee
+	u in c.noteTags.taggee // taggee
+		
 	// A.11: all walls has one user associated with it
 	all w:Wall | one u:User | w = u.wall
 }
