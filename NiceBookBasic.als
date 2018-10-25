@@ -131,7 +131,6 @@ pred invariants[n:SocialNetwork] {
 	usersInvariant[n]
 	friendInvariant[n]
 	contentInvariant[n]
-
 	wallInvariant[n]
 	tagInvariant[n]
 }

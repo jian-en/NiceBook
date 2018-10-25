@@ -59,6 +59,13 @@ pred remove[n,n':SocialNetwork, u:User, c:Content] {
 
 run remove for 3
 
+assert RemovePreserveInvariant {
+	all n, n': SocialNetwork, u:User, c:Content |
+		invariants[n] and remove[n,n',u,c] implies
+		invariants[n']
+}
+
+check RemovePreserveInvariant for 5 but exactly 2 SocialNetwork
 
 
 // Global states in O.3 and O.4
@@ -100,6 +107,7 @@ assert PublishPreserveInvariant {
 		invariants[n']
 }
 
+run publish for 3
 check PublishPreserveInvariant for 5 but exactly 2 SocialNetwork
 
 // Local states in O.4
@@ -124,6 +132,7 @@ assert UnpublishPreserveInvariant {
 		invariants[n']
 }
 
+run unpublish for 3
 check UnpublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 
 // O.5: addComment
@@ -145,9 +154,8 @@ assert AddPreservesInvariant {
 		invariants[n']	
 }
 
-check AddPreservesInvariant for 5
-
 run addComment for 10
+check AddPreservesInvariant for 5
 
 // Unchanged things in content while tagging
 pred contentOp[c,c':Content] {
@@ -183,6 +191,8 @@ assert AddTagPreservesInvariant {
 		(invariants[n] and addTag[n,n',n'',t,c,c',er,ee,ee',w,w']) implies
 		(invariants[n'] and invariants[n''])
 }
+
+run addTag for 3
 check AddTagPreservesInvariant for 5
 
 // O.7: removeTag
@@ -207,6 +217,8 @@ assert RemoveTagPreservesInvariant {
 		(invariants[n] and removeTag[n,n',n'',t,c,c',ee,ee',w,w']) implies
 		(invariants[n'] and invariants[n''])
 }
-check AddTagPreservesInvariant for 5
+
+run removeTag for 3
+check RemoveTagPreservesInvariant for 5
 
 // --------- End: Operations --------
