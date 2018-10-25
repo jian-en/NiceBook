@@ -6,36 +6,40 @@ module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic
 open NiceBook/NiceBookPrivacy
 
+// Make sure all instances are within the invariants
 fact {
 	all n:SocialNetwork | invariants[n]
 }
 
 // -------- Start: Operations -------
-// A.2: The social network users and friends not change
 pred networkOp[n,n':SocialNetwork] {
 	n'.users = n.users
 	n'.friends = n.friends
 }
 
-// c is a pure content
 pred is_naked[c:Content, n:SocialNetwork] {
+	// can only add an independent content with no tags
+	// no comment
+	// not existed in the network
 	no get_tags[c]
 	no comment:Comment | comment.attached = c
 	c not in User.(n.contents)
 }
 
 pred uploadPhoto[n,n':SocialNetwork,u:User,p:Photo] {
-	// Photo no association with any note
+	// It is an independent photo
 	no get_note_from_photo[p]	
 	n'.contents = n.contents + u->p
 }
 
 pred uploadNote[n,n':SocialNetwork,u:User,note:Note] {
-	all p:note.photos | is_naked[p, n]
+	all p:note.photos | is_naked[p, n] // photos are pure
+	// add the photoes and note together
 	n'.contents = n.contents + u->note + {a:User, c:Content | a = u and c in note.photos}
 }
 
 pred uploadComment[n,n':SocialNetwork,u:User,c:Comment] {
+	// comment must be attached to a uploaded but unpublished content
 	c.attached in get_upload_not_publish[n, u]
 	n'.contents = n.contents + u->c
 }
@@ -65,7 +69,7 @@ pred removeNote[n,n':SocialNetwork,u:User,note:Note] {
 	all p:note.photos | p not in u.wall.items
 	all_comments[note] not in u.wall.items
 	all p:note.photos | all_comments[p] not in u.wall.items
-	// Remove all the related contents
+	// All the related contents not in the contents
 	n'.contents = n.contents - 
 			 {a:User, c:Content | a = u and 
 			  c in (note + note.photos + all_comments[note] +
@@ -76,14 +80,13 @@ pred removeNote[n,n':SocialNetwork,u:User,note:Note] {
 pred removePhoto[n,n':SocialNetwork, u:User, p:Photo] {
 	// Photo no association with any note
 	no get_note_from_photo[p]
-		
+	all_comments[p] not in u.wall.items
 	n'.contents = n.contents - 
-			  {m:User, c:Comment | m = u and c in all_comments[p]} - u->p
+			  {m:User, c:Comment | m = u and c in (all_comments[p] + p)}
 }
 
 pred removeComment[n,n':SocialNetwork,u:User,c:Comment] {
 	c.attached in get_upload_not_publish[n, u]
-
 	n'.contents = n.contents - {m:User, o:Comment | 
 					    m=u and o in all_comments[c]} - u->c
 }
@@ -111,7 +114,6 @@ assert RemovePreserveInvariant {
 
 check RemovePreserveInvariant for 7 but exactly 2 SocialNetwork
 // end of O.2 remove
-
 
 
 // Global states in O.3 and O.4
