@@ -16,6 +16,8 @@ fun validUser[u:User, n:SocialNetwork]: set User {
 
 fun viewable[u:User, n:SocialNetwork] : set Content {
 	n.contents[u] +  // 1. created by myself
+	// A.20:  Content privacy level bounds to privacy level of the wall it is published to,
+         // if more strict.
 	u.wall.items +  // 2. on the wall
 	
 	validFriends[u,n].wall.items +  // 3. on valid friends' walls

@@ -41,7 +41,7 @@ sig Tag {
 }
 
 sig Wall { 
-	// A.4 wall can be empty
+	// A.4:  Wall can be empty, that is with no content.
 	items: set Content,
 	wallPrivacy: Privacy
 }
@@ -64,14 +64,15 @@ pred friendInvariant[n:SocialNetwork] {
 }
 
 pred photoInvariant[n:SocialNetwork] {
+	// A.23 both the photos and notes that contain them are in the contents
 	all photo:all_photos[n] | get_note_from_photo[photo] in User.(n.contents) 
 }
 
 pred commentInvariant[n:SocialNetwork] {
 	// A.10: comment can not be attached to itself
 	// A.11: No cycles in comments attachment 
-	all c:all_comments[n] | c not in c.^attached
-	// comment can only attach to content in the network
+	all c:Comment | c not in c.^attached
+	// A.24: comment can only attach to content in the network
 	all c:all_comments[n] | c.attached in User.(n.contents)
 }
 
@@ -99,7 +100,7 @@ pred wallInvariant[n:SocialNetwork] {
 	all u,u':n.users | u'.wall = u.wall implies u' = u
 	// A.12: content on the wall must in the social network contents relationship
 	all u:n.users | all c:u.wall.items | c in User.(n.contents)
-	// A.16: A user cannot tag itself
+	// A.16: A user cannot tag himself/herself
 	// Owner & friends & owner as tagee
 	all u:n.users | all c:u.wall.items | 
 	c in n.contents[u] or // owner
@@ -115,7 +116,10 @@ pred wallInvariant[n:SocialNetwork] {
 	w.wallPrivacy = OnlyMe
 		
 	// A.18: all walls has one user associated with it
-	all w:Wall | one u:User | w = u.wall
+	// all descendents are on the wall if the parent on the wall
+	all w:n.users.wall | one u:User | w = u.wall	
+	all w:n.users.wall, c:Content | c in w.items implies	
+	  (c.photos + all_comments[c]) in w.items
 }
 
 pred tagInvariant[n:SocialNetwork] {
@@ -123,9 +127,8 @@ pred tagInvariant[n:SocialNetwork] {
 	all t: Tag, u, u': n.users | u = t.tagger and u' = t.taggee implies
 	u -> u' in n.friends
 	// A.14: No tags are shared among multiple notes/photos
-	// noteTag and photoTag not overlap
+	// A.22: noteTag and photoTag not overlap, tags across contents not overlap
 	all c:Content | #(get_noteTags[c] & get_photoTags[c]) = 0
-	// tags across contents not overlap
 	all c,c':Content | c != c' implies #(get_tags[c] & get_tags[c']) = 0
 	// A.16: Every tag has a content associate with it
 	all t:Tag | one c:Content | t in get_tags[c]
@@ -144,7 +147,10 @@ pred invariants[n:SocialNetwork] {
 
 run {
 	all n:SocialNetwork | invariants[n]
-} for 3 but exactly 1 SocialNetwork
+	all c:Content | some n:SocialNetwork | c in User.(n.contents)
+} for 5 but exactly 1 SocialNetwork
+
+// Helper functions
 
 fun get_note_from_photo[p:Photo] : set Note {
 	{c:Note | p in c.photos}
@@ -180,4 +186,11 @@ fun get_photoTags[c:Content]: set Tag {
 
 fun get_tags[c:Content]: set Tag {
 	get_noteTags[c] + get_photoTags[c]
+}
+
+fun get_upload_not_publish[n:SocialNetwork, u:User] :set Content {	
+	{c:Content | c in n.contents[u] and c not in u.wall.items and u in n.users}	
+}	
+ fun get_walls[n:SocialNetwork] : set Wall {	
+	n.users.wall	
 }
