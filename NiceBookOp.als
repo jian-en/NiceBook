@@ -17,6 +17,7 @@ pred networkOp[n,n':SocialNetwork] {
 	n'.friends = n.friends
 }
 
+// A.24: What kinds of contents can be uploaded?
 pred is_naked[c:Content, n:SocialNetwork] {
 	// can only add an independent content with no tags
 	// no comment
