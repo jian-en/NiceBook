@@ -142,7 +142,6 @@ pred invariants[n:SocialNetwork] {
 	tagInvariant[n]
 }
 
-
 run {
 	all n:SocialNetwork | invariants[n]
 } for 3 but exactly 1 SocialNetwork

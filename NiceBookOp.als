@@ -226,7 +226,7 @@ assert RemoveTagPreservesInvariant {
 		(invariants[n'] and invariants[n''])
 }
 
-run removeTag for 3
-check RemoveTagPreservesInvariant for 5
+run removeTag for 5
+check RemoveTagPreservesInvariant for 10
 
 // --------- End: Operations --------
