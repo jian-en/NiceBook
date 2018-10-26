@@ -86,7 +86,7 @@ pred promotePublish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 pred publishWall[w,w':Wall, c:Content] {
 	w'.wallPrivacy = w.wallPrivacy
 	// Publish to the wall
-	w'.items = w.items + c  // TODO: everything related to c
+	w'.items = w.items + get_related[c]  // TODO: everything related to c
 }
 
 // O.3: publish
@@ -119,7 +119,7 @@ check PublishPreserveInvariant for 5 but exactly 2 SocialNetwork
 pred unpublishWall[w,w':Wall, c:Content] {
 	w'.wallPrivacy = w.wallPrivacy
 	// Unpublish to the wall
-	w'.items = w.items - c  // TODO: everything related to c
+	w'.items = w.items - get_related[c]  // TODO: everything related to c
 }
 
 // O.4: unpublish
@@ -158,7 +158,7 @@ assert AddPreservesInvariant {
 		invariants[n']	
 }
 
-check AddPreservesInvariant for 10
+check AddPreservesInvariant for 5
 
 run AddComment {
 	some n,n':SocialNetwork, u:User, c:Comment, x:Content | 
@@ -227,6 +227,6 @@ assert RemoveTagPreservesInvariant {
 }
 
 run removeTag for 5
-check RemoveTagPreservesInvariant for 10
+check RemoveTagPreservesInvariant for 5
 
 // --------- End: Operations --------
