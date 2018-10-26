@@ -1,6 +1,8 @@
 /*
- * Project1: NiceBook
- * NiceBook: Operations
+ * Project#1: NiceBook
+ * Group#6
+ * NiceBookOp - Operations
+ * 
  */
 module NiceBook/NiceBookOp
 open NiceBook/NiceBookBasic

@@ -1,6 +1,11 @@
+/*
+ * Project#1: NiceBook
+ * Group#6
+ * NiceBookBasic - Privacy
+ * 
+ */
 module NiceBook/NiceBookPrivacy
 open NiceBook/NiceBookBasic
-
 
 fun validFriends[u:User, n:SocialNetwork]: set User {
 	{u':u.(n.friends) | u'.wall.wallPrivacy in (Friends + FriendsOfFriends + Everyone)}

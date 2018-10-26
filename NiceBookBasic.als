@@ -1,5 +1,6 @@
 /*
- * Project 1: NiceBook
+ * Project#1: NiceBook
+ * Group#6
  * NiceBookBasic - Invariant and functions
  * 
  */

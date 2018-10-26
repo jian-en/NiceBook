@@ -1,0 +1,3 @@
+NiceBookBasic.als: all the invariants and helper functions
+NiceBookOp.als:    7 dynamic operations
+NiceBookPrivacy:   privacy related functions and assertions
