@@ -31,11 +31,6 @@ fun commentable[u:User, n:SocialNetwork] : set Content {
 }
 
 /*
-In particular, we say that a privacy violation has occurred if a user 
-is able to view a piece of content without adhering to the privacy level 
-that is assigned to the content by its owner. Write an assertion
-called NoPrivacyViolation to check that no such violation is possible.
-*/
 assert NoPrivacyViolation {
     all n : SocialNetwork, c : Wall.items, u : User |
     c in viewable[u,n] implies (
@@ -50,6 +45,4 @@ assert NoPrivacyViolation {
         c.viewPrivacy = Everyone
     )
 }
-
-check NoPrivacyViolation for 10
-
+*/

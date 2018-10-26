@@ -106,6 +106,13 @@ pred wallInvariant[n:SocialNetwork] {
 	c in n.friends[u].(n.contents) or // friends
 	u in c.photoTags.taggee or // taggee
 	u in c.noteTags.taggee // taggee
+
+	// Content view privacy must be lower (less strict) than wall privacy
+	all u:n.users | all w:u.wall | all c:w.items |
+	w.wallPrivacy = Everyone and c.viewPrivacy = Everyone or 
+	w.wallPrivacy = Friends and c.viewPrivacy in (Everyone + Friends) or 
+	w.wallPrivacy = FriendsOfFriends and c.viewPrivacy in (Everyone + Friends + FriendsOfFriends) or
+	w.wallPrivacy = OnlyMe
 		
 	// A.18: all walls has one user associated with it
 	all w:Wall | one u:User | w = u.wall

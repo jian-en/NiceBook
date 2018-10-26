@@ -93,6 +93,11 @@ pred publishWall[w,w':Wall, c:Content] {
 pred publish[n,n':SocialNetwork, u,u':User, w,w':Wall, c:Content] {
 	// Precondition
 	c not in w.items
+	// Content view privacy must be lower (less strict) than wall privacy
+	w.wallPrivacy = Everyone and c.viewPrivacy = Everyone or 
+	w.wallPrivacy = Friends and c.viewPrivacy in (Everyone + Friends) or 
+	w.wallPrivacy = FriendsOfFriends and c.viewPrivacy in (Everyone + Friends + FriendsOfFriends) or
+	w.wallPrivacy = OnlyMe
 	// B.8: Notes and photos from the user or its friends can be published
 	c in u.(n.contents) + u.(n.friends).(n.contents)
 	c in Note + Photo
@@ -139,8 +144,6 @@ check UnpublishPreserveInvariant for 2 but exactly 2 SocialNetwork
 pred addComment[n,n':SocialNetwork, u:User, c:Comment, x:Content] {
 	// B.10: Own or visible content
 	x in viewable[u,n]
-	// User can control who can comment on their content
-	x in commentable[u,n]
 	networkOp[n,n']
 	c not in User.(n.contents)
 	// Add comment
